@@ -1,0 +1,41 @@
+/** understanding my tables (i.e. # of columns, column names, value types) **/
+
+SELECT * 
+FROM
+job_postings_fact
+LIMIT 10;
+
+SELECT * 
+FROM
+company_dim
+LIMIT 10;
+
+SELECT * 
+FROM
+skills_dim
+LIMIT 10;
+
+SELECT * 
+FROM
+skills_job_dim
+LIMIT 10;
+
+
+/** Question 3: What are the most in-demand skills for my role?
+
+Goal: Find which skills I need to focus on for roles relating to data analysis  **/
+
+
+SELECT skills, COUNT(skills_job_dim.*) AS skill_count
+FROM skills_dim
+INNER JOIN skills_job_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+INNER JOIN job_postings_fact ON skills_job_dim.job_id = job_postings_fact.job_id
+--utilizing same "WHERE" clause as seen in query 1 that filters for my interests in job postings
+WHERE (job_schedule_type = 'Full-time') AND (job_location LIKE '%United States%') AND (job_health_insurance = TRUE) AND (salary_year_avg IS NOT NULL)
+AND (job_title_short = 'Data Analyst')
+--group by clause due to aggregation of skill count
+GROUP BY skills_dim.skill_id
+--order by clause to filter from highest count to lowest count to easily see which skills are the most in demand
+ORDER BY skill_count DESC
+--limit clause to only include the top 5 skills
+LIMIT 5;

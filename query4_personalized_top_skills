@@ -1,0 +1,36 @@
+/** understanding my tables (i.e. # of columns, column names, value types) **/
+
+SELECT * FROM
+job_postings_fact 
+LIMIT 10;
+
+SELECT * FROM
+company_dim
+LIMIT 10;
+
+SELECT * FROM
+skills_dim
+LIMIT 10;
+
+SELECT * FROM
+skills_job_dim
+LIMIT 10;
+
+
+/** Question 4: What are the top skills based on salary for my role?
+
+Goal: Find average salary associated with each skill for D.A. roles **/
+
+SELECT skills, ROUND (AVG(salary_year_avg), 2) AS avg_skill_salary
+FROM skills_dim
+INNER JOIN skills_job_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+INNER JOIN job_postings_fact ON skills_job_dim.job_id = job_postings_fact.job_id
+--utilizing same "WHERE" clause as seen in query 1 that filters for my interests in job postings
+WHERE (job_schedule_type = 'Full-time') AND (job_location LIKE '%United States%') AND (job_health_insurance = TRUE) AND (salary_year_avg IS NOT NULL)
+AND (job_title_short = 'Data Analyst')
+--group by clause due to aggregation of avg_skill_salary
+GROUP BY skills
+--order by clause to filter from highest count to lowest count to easily see which skills are the most in demand
+ORDER BY avg_skill_salary DESC
+--limit clause to only include the top 5 skills
+LIMIT 15;

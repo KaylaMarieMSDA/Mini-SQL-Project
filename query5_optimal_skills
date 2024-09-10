@@ -1,0 +1,59 @@
+/** understanding my tables (i.e. # of columns, column names, value types) **/
+
+SELECT * FROM
+job_postings_fact 
+LIMIT 10;
+
+SELECT * FROM
+company_dim
+LIMIT 10;
+
+SELECT * FROM
+skills_dim
+LIMIT 10;
+
+SELECT * FROM
+skills_job_dim
+LIMIT 10;
+
+
+/** Question 5: What are the most optimal skills to learn (high demand and high paying) 
+
+Goal: Determine which data analysis skills are both in high demand and also pay the best **/
+
+--utilizing CTEs and previous queries to maximize proficiency 
+
+--1st CTE: from query 3, in demand skills
+
+WITH in_demand_skills AS (
+    SELECT skills_dim.skill_id,skills, COUNT(skills_job_dim.*) AS skill_count
+    FROM skills_dim
+    INNER JOIN skills_job_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+    INNER JOIN job_postings_fact ON skills_job_dim.job_id = job_postings_fact.job_id
+    --utilizing same "WHERE" clause as seen in query 1 that filters for my interests in job postings
+    WHERE (job_schedule_type = 'Full-time') AND (job_location LIKE '%United States%') AND (job_health_insurance = TRUE) AND (salary_year_avg IS NOT NULL)
+    AND (job_title_short = 'Data Analyst')
+    --group by clause due to aggregation of skill count
+    GROUP BY skills_dim.skill_id
+), 
+
+--2nd CTE: from query 4, top paying skills
+ top_paying_skills AS (
+--important to include "skill_id" in the CTE to join the CTE to other tables as a key
+    SELECT skills_dim.skill_id,skills, ROUND (AVG(salary_year_avg), 2) AS avg_skill_salary
+    FROM skills_dim
+    INNER JOIN skills_job_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+    INNER JOIN job_postings_fact ON skills_job_dim.job_id = job_postings_fact.job_id
+    --utilizing same "WHERE" clause as seen in query 1 that filters for my interests in job postings
+    WHERE (job_schedule_type = 'Full-time') AND (job_location LIKE '%United States%') AND (job_health_insurance = TRUE) AND (salary_year_avg IS NOT NULL)
+    AND (job_title_short = 'Data Analyst')
+    --group by clause due to aggregation of avg_skill_salary
+    GROUP BY skills_dim.skill_id
+)
+
+--main query utilizing the two CTEs
+SELECT
+DISTINCT in_demand_skills.skills,in_demand_skills.skill_count AS demand_count, top_paying_skills.avg_skill_salary
+FROM in_demand_skills
+INNER JOIN top_paying_skills ON top_paying_skills.skill_id = in_demand_skills.skill_id
+ORDER BY avg_skill_salary DESC;

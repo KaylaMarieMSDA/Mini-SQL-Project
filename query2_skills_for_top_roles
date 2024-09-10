@@ -1,0 +1,39 @@
+/** understanding my tables (i.e. # of columns, column names, value types) **/
+
+SELECT * 
+FROM job_postings_fact
+LIMIT 10;
+
+SELECT * FROM
+company_dim
+LIMIT 10;
+
+SELECT * FROM
+skills_dim
+LIMIT 10;
+
+SELECT * FROM
+skills_job_dim
+LIMIT 10;
+
+
+/** Question 2: What are the skills required for these top paying roles? 
+
+Goal: Determine what skills provide the best salary for data analysis roles**/
+
+--utilizing the first query(query1_top_roles) as a CTE to then join the skills-related tables to showcase the skill name and skill type for their corresponding job posting
+WITH top_paying_jobs AS (
+    SELECT job_id, job_title, job_title_short, salary_year_avg, name AS company_name
+FROM job_postings_fact
+INNER JOIN company_dim ON job_postings_fact.company_id = company_dim.company_id
+--utilizing same "WHERE" clause as seen in the first query(query1_top_roles) that filters for my interests in job postings
+WHERE (job_schedule_type = 'Full-time') AND (job_location LIKE '%United States%') AND (job_health_insurance = TRUE) AND (salary_year_avg IS NOT NULL)
+AND (job_title_short = 'Data Analyst')
+ORDER BY salary_year_avg DESC
+)
+
+SELECT top_paying_jobs.*, skills_dim.skills AS skill_names, skills_dim.type AS skill_type
+FROM top_paying_jobs
+--use of INNER JOIN to create a result set with no nulls and with all having an entered value(s) for skill name and type for the job posting
+INNER JOIN skills_job_dim ON top_paying_jobs.job_id = skills_job_dim.job_id
+INNER JOIN skills_dim ON skills_job_dim.skill_id = skills_dim.skill_id;
